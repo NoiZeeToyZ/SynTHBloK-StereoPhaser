@@ -1,0 +1,13 @@
+# build output
+*.a
+*.so
+*.dylib
+*.dll
+build/
+dist/
+*.vcvplugin
+*.log
+# copied into each single at build time (from the repo root)
+/singles/*/res
+/singles/*/LICENSE.txt
+.DS_Store

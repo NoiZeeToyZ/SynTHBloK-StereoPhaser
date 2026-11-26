@@ -1,5 +1,6 @@
 #pragma once
 #include "rack.hpp"
+#include <set>
 
 using namespace rack;
 
@@ -44,11 +45,19 @@ extern Model* modelSynTHBloKLoop;
 extern Model* modelSynTHBloKMtxQuad;
 extern Model* modelSynTHBloKDualFilter;
 extern Model* modelSynTHBloKRandroyd;
+extern Model* modelNoizeePatchGen;
+// the module ids PATCH GEN placed (src/NoizeePatchGen.cpp): RANDROYD never patches into them
+std::set<int64_t>& patchGenOwned();
+// ONE RIG: set by a RANDROYD in the rack; PATCH GEN calls it so its patch packs into RANDROYD's rig
+#include <functional>
+std::function<void(history::ComplexAction*)>& randroydPackHook();
 
 // VCV-size jack (23.7 px, the same as Rack's PJ301M): black body with a silver ring.
 // Used on every module but the JAM and MIX-24.
 struct BlackJack : app::SvgPort {
-    BlackJack() { setSvg(APP->window->loadSvg(asset::plugin(pluginInstance, "res/JackBlackSilver.svg"))); }
+    // (Nov 14 2026, Nick: "make all the jacks match small jacks": every module's jacks are the 5.2 mm small jack now; the
+    // 8 mm black / silver art stays in res/ in case it comes back. Jacks are placed by their centre, so they stay put.)
+    BlackJack() { setSvg(APP->window->loadSvg(asset::plugin(pluginInstance, "res/JackSmall.svg"))); }
 };
 
 // Small version of BlackJack (5.2 mm), for the JAM and MIX-24 modules.

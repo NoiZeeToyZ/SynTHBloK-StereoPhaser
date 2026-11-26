@@ -45,8 +45,6 @@ struct SynTHBloKStereo : Module {
     float smoothL = 0.f;
     float smoothR = 0.f;
 
-    float scEnv = 0.f;
-
     float lowMono = 0.f;
 
     // --- AP filters + micro delay ---
@@ -69,7 +67,7 @@ struct SynTHBloKStereo : Module {
     };
     enum InputIds {
         MAIN_IN_INPUT,
-        SIDECHAIN_INPUT,
+        SIDECHAIN_INPUT_REMOVED,   // was the SIDE (sidechain duck) jack, removed Nov 26 2026; slot kept so saved patches keep their CV cables
         WIDTH_CV_INPUT,
         TILT_CV_INPUT,
         AIR_CV_INPUT,
@@ -95,7 +93,7 @@ struct SynTHBloKStereo : Module {
         OUT_LIGHT,
         STATUS_LIGHT,
         ENUMS(KNOB_LED, 7 * 3),   // tiny RGB LED per knob: width, tilt, air, glue, punch, clip, level
-        ENUMS(IO_LED, 5 * 3),     // tiny RGB LED per jack: main in, side in, L, R, side out
+        ENUMS(IO_LED, 5 * 3),     // tiny RGB LED per jack: main in, (slot 1 unused: side in removed), L, R, side out
         NUM_LIGHTS
     };
 
@@ -139,7 +137,6 @@ struct SynTHBloKStereo : Module {
     SynTHBloKStereo() {
         config(NUM_PARAMS, NUM_INPUTS, NUM_OUTPUTS, NUM_LIGHTS);
         configInput(MAIN_IN_INPUT, "Main");
-        configInput(SIDECHAIN_INPUT, "Side");
         configInput(WIDTH_CV_INPUT, "Width CV");
         configInput(TILT_CV_INPUT, "Tilt CV");
         configInput(AIR_CV_INPUT, "Air CV");
@@ -167,7 +164,6 @@ struct SynTHBloKStereo : Module {
         // INPUT + MIX SYSTEM (PRE)
         // ---------------------------------------------------------------------
         float in = inputs[MAIN_IN_INPUT].isConnected() ? inputs[MAIN_IN_INPUT].getVoltage() : 0.f;
-        float sidechainIn = inputs[SIDECHAIN_INPUT].isConnected() ? inputs[SIDECHAIN_INPUT].getVoltage() : 0.f;
 
         float dryL = in;
         float dryR = in;
@@ -396,23 +392,6 @@ struct SynTHBloKStereo : Module {
         L += transientL * punch;
         R += transientR * punch;
 
-        // SIDECHAIN DUCK
-        float scLevel = fabsf(sidechainIn);
-        float atkSC = 0.001f;
-        float relSC = 0.050f;
-
-        if (scLevel > scEnv)
-            scEnv += atkSC * (scLevel - scEnv);
-        else
-            scEnv += relSC * (scEnv - scLevel);
-
-        float duckAmt = glue * 0.5f;
-        float duckGain = 1.f - duckAmt * scEnv;
-        duckGain = clamp(duckGain, 0.2f, 1.f);
-
-        L *= duckGain;
-        R *= duckGain;
-
         // CLIP
         float drive = 1.f + clip * 3.f;
         float asym = 0.02f * clip;
@@ -550,7 +529,6 @@ struct SynTHBloKStereo : Module {
             const float kv[7] = {bw, bt, ba, bg, bp, bc, bo};
             for (int i = 0; i < 7; i++) setParamLED(KNOB_LED + i * 3, kv[i]);
             setSignalLED(IO_LED + 0 * 3, in);
-            setSignalLED(IO_LED + 1 * 3, sidechainIn);
             setSignalLED(IO_LED + 2 * 3, L);
             setSignalLED(IO_LED + 3 * 3, R);
             setSignalLED(IO_LED + 4 * 3, S);
@@ -985,7 +963,6 @@ struct SynTHBloKStereoWidget : ModuleWidget {
 
 addParam(createParamCentered<Trimpot>(mm2px(Vec(47.f, 99.0f)), module, SynTHBloKStereo::MIX_PARAM));
 addInput(createInputCentered<BlackJack>(mm2px(Vec(9.004f, 18.770f)), module, SynTHBloKStereo::MAIN_IN_INPUT));
-addInput(createInputCentered<BlackJack>(mm2px(Vec(50.897f, 18.770f)), module, SynTHBloKStereo::SIDECHAIN_INPUT));
 
 addParam(createParamCentered<RoundBlackKnob>(mm2px(Vec(30.48f, 38.949f)), module, SynTHBloKStereo::WIDTH_PARAM));
 addInput(createInputCentered<BlackJack>(mm2px(Vec(30.48f, 53.0f)), module, SynTHBloKStereo::WIDTH_CV_INPUT));
@@ -1021,7 +998,6 @@ addChild(createLightCentered<TinyLight<RedGreenBlueLight>>(mm2px(Vec(30.48f, 77.
 addChild(createLightCentered<TinyLight<RedGreenBlueLight>>(mm2px(Vec(47.f, 77.4f)), module, SynTHBloKStereo::KNOB_LED + 5 * 3));
 addChild(createLightCentered<TinyLight<RedGreenBlueLight>>(mm2px(Vec(30.48f, 110.0f)), module, SynTHBloKStereo::KNOB_LED + 6 * 3));
 addChild(createLightCentered<TinyLight<RedGreenBlueLight>>(mm2px(Vec(9.004f, 26.6f)), module, SynTHBloKStereo::IO_LED + 0 * 3));
-addChild(createLightCentered<TinyLight<RedGreenBlueLight>>(mm2px(Vec(50.897f, 26.6f)), module, SynTHBloKStereo::IO_LED + 1 * 3));
 addChild(createLightCentered<TinyLight<RedGreenBlueLight>>(mm2px(Vec(14.f, 123.4f)), module, SynTHBloKStereo::IO_LED + 2 * 3));
 addChild(createLightCentered<TinyLight<RedGreenBlueLight>>(mm2px(Vec(30.48f, 123.4f)), module, SynTHBloKStereo::IO_LED + 3 * 3));
 addChild(createLightCentered<TinyLight<RedGreenBlueLight>>(mm2px(Vec(47.f, 123.4f)), module, SynTHBloKStereo::IO_LED + 4 * 3));

@@ -79,7 +79,7 @@ struct SynTHBloKStereo : Module {
     enum OutputIds {
         L_OUT_OUTPUT,
         R_OUT_OUTPUT,
-        SIDE_OUT_OUTPUT,
+        SIDE_OUT_OUTPUT_REMOVED,   // was the SIDE output jack, removed Nov 26 2026; slot kept so saved patches keep their L / R cables
         NUM_OUTPUTS
     };
     enum LightIds {
@@ -93,7 +93,7 @@ struct SynTHBloKStereo : Module {
         OUT_LIGHT,
         STATUS_LIGHT,
         ENUMS(KNOB_LED, 7 * 3),   // tiny RGB LED per knob: width, tilt, air, glue, punch, clip, level
-        ENUMS(IO_LED, 5 * 3),     // tiny RGB LED per jack: main in, (slot 1 unused: side in removed), L, R, side out
+        ENUMS(IO_LED, 5 * 3),     // tiny RGB LED per jack: main in, (slot 1 unused: side in removed), L, R, (slot 4 unused: side out removed)
         NUM_LIGHTS
     };
 
@@ -145,7 +145,6 @@ struct SynTHBloKStereo : Module {
         configInput(CLIP_CV_INPUT, "Clip CV");
         configOutput(L_OUT_OUTPUT, "Left");
         configOutput(R_OUT_OUTPUT, "Right");
-        configOutput(SIDE_OUT_OUTPUT, "Side");
         configParam(WIDTH_PARAM, 0.f, 2.f, 1.f, "Width");
         configParam(TILT_PARAM, -1.f, 1.f, 0.f, "Tilt");
         configParam(AIR_PARAM, 0.f, 1.f, 0.f, "Air");
@@ -456,7 +455,6 @@ struct SynTHBloKStereo : Module {
 
         outputs[L_OUT_OUTPUT].setVoltage(L);
         outputs[R_OUT_OUTPUT].setVoltage(R);
-        outputs[SIDE_OUT_OUTPUT].setVoltage(S);
 
         // ---------------------------------------------------------------------
         // FFT ACCUMULATION (isolated)
@@ -531,7 +529,6 @@ struct SynTHBloKStereo : Module {
             setSignalLED(IO_LED + 0 * 3, in);
             setSignalLED(IO_LED + 2 * 3, L);
             setSignalLED(IO_LED + 3 * 3, R);
-            setSignalLED(IO_LED + 4 * 3, S);
         }
 
         // ---------------------------------------------------------------------
@@ -986,7 +983,6 @@ addParam(createParamCentered<RoundBlackKnob>(mm2px(Vec(30.48f, 99.0f)), module, 
 
 addOutput(createOutputCentered<BlackJack>(mm2px(Vec(14.f, 115.4f)), module, SynTHBloKStereo::L_OUT_OUTPUT));
 addOutput(createOutputCentered<BlackJack>(mm2px(Vec(30.48f, 115.4f)), module, SynTHBloKStereo::R_OUT_OUTPUT));
-addOutput(createOutputCentered<BlackJack>(mm2px(Vec(47.f, 115.4f)), module, SynTHBloKStereo::SIDE_OUT_OUTPUT));
 
 
 // tiny knob LEDs (position + CV) and jack signal LEDs
@@ -1000,7 +996,6 @@ addChild(createLightCentered<TinyLight<RedGreenBlueLight>>(mm2px(Vec(30.48f, 110
 addChild(createLightCentered<TinyLight<RedGreenBlueLight>>(mm2px(Vec(9.004f, 26.6f)), module, SynTHBloKStereo::IO_LED + 0 * 3));
 addChild(createLightCentered<TinyLight<RedGreenBlueLight>>(mm2px(Vec(14.f, 123.4f)), module, SynTHBloKStereo::IO_LED + 2 * 3));
 addChild(createLightCentered<TinyLight<RedGreenBlueLight>>(mm2px(Vec(30.48f, 123.4f)), module, SynTHBloKStereo::IO_LED + 3 * 3));
-addChild(createLightCentered<TinyLight<RedGreenBlueLight>>(mm2px(Vec(47.f, 123.4f)), module, SynTHBloKStereo::IO_LED + 4 * 3));
 
 if (module) {
 auto* analyzer = new HybridStereoAnalyzer(module);
